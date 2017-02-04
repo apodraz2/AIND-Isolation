@@ -125,7 +125,10 @@ class CustomPlayer:
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
-
+        if not game.get_legal_moves(game.active_player):
+            return (-1, -1)
+        if game.move_count <= 1:
+            return (2, 3)
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
@@ -170,62 +173,34 @@ class CustomPlayer:
 
         # TODO: finish this function!
         legal_moves = game.get_legal_moves(game.active_player)
-        
-        if not legal_moves:
-            return (custom_score(game, active_player), (-1, -1))
-
         best_move = legal_moves[0]
         best_score = float('-inf')
-
-        for move in legal_moves:
-            clone = game.forecast_move(move)
-            score = self.min(clone, depth)
-            if score > best_score:
-                best_score = score
-                best_move = move
-        tuple = (best_score, best_move)
-        return tuple
-    
-    def min(self, game, depth):
-        legal_moves = game.get_legal_moves(game.active_player)
-        best_score = float('inf')
+        if not legal_moves:
+            return (custom_score(game, active_player), (-1, -1))
         
-
-        if len(legal_moves) == 0 or depth <= 1:
-            score = custom_score(game, game.active_player)
-            print("move count:")
-            print(game.move_count)
-            print(score)
-            return score
+        if maximizing_player:
         
-        for move in legal_moves:
-            clone = game.forecast_move(move)
-            score = self.max(game, depth-1)
-            if score < best_score:
-                best_move = move
-                best_score = score
-
-        return best_score
-    
-
-    def max(self, game, depth):
-        legal_moves = game.get_legal_moves(game.active_player)
-        best_score = float('-inf')
-        
-        
-
-        if len(legal_moves) == 0 or depth <= self.search_depth:
-            return custom_score(game, game.active_player)
-        
-        for move in legal_moves:
-            clone = game.forecast_move(move)
-            score = self.min(game, depth-1)
-            
-            if score > best_score:
-                best_move = move
-                best_score = score
-
-        return best_score
+            if depth == 1:
+                for move in legal_moves:
+                    clone = game.forecast_move(move)
+                    score = custom_score(clone, clone.active_player)
+                    if score > best_score:
+                        best_score = score
+                        best_move = move
+                return (best_score, best_move)
+            else:
+                return self.minimax(game, depth-1, False)
+        else:
+            best_score = float('inf')
+            if depth == 1:
+                for move in legal_moves:
+                    clone = game.forecast_move(move)
+                    score = custom_score(clone, clone.active_player)
+                    if score < best_score:
+                        best_score = score
+                        best_move = move
+            else:
+                return self.minimax(game, depth-1, True)
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
