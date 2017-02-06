@@ -138,7 +138,7 @@ class CustomPlayer:
             # when the timer gets close to expiring
             if self.method == 'minimax':
                 if self.iterative:
-                    (best_score, best_move) = best_move, best_score = self.minimax(game, float('inf'))
+                    (best_score, best_move) = self.minimax(game, float('inf'))
                 else:
                     (best_score, best_move) = self.minimax(game, self.search_depth)
 
@@ -178,27 +178,39 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
-        legal_moves = game.get_legal_moves(game.active_player)
+        legal_moves = game.get_legal_moves(self)
         best_move = legal_moves[0]
         best_score = float('-inf')
         
         #print(depth)
         
         if not legal_moves:
-            return (custom_score(game, active_player), (-1, -1))
-
-        elif depth <= 1:
-            best_score, best_move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-    
-        else:
+            return (custom_score(game, self), (-1, -1))
+        
+        if legal_moves and self.iterative:
             for move in legal_moves:
                 if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
                     return (best_score, best_move)
                 clone = game.forecast_move(move)
-                score = self.min_play(clone, depth - 1)
+                score = self.score(clone, self)
                 if score > best_score:
                     best_move = move
                     best_score = score
+        
+        elif depth <= 1:
+            best_score, best_move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+            return best_score, best_move
+    
+        
+        for move in legal_moves:
+            if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
+                return (best_score, best_move)
+                
+            clone = game.forecast_move(move)
+            score = self.min_play(clone, depth - 1)
+            if score > best_score:
+                best_move = move
+                best_score = score
 
         return (best_score, best_move)
 
@@ -207,41 +219,57 @@ class CustomPlayer:
         best_score = float('inf')
         #print(depth)
         if not legal_moves:
-            return self.score(game, game.inactive_player)
+            return self.score(game, self)
+        
+        if legal_moves and self.iterative:
+            for move in legal_moves:
+                if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
+                    return best_score
+                clone = game.forecast_move(move)
+                score = self.score(clone, self)
+                if score < best_score:
+                    best_score = score
+
         elif depth <= 1:
             score, best_move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
             return score
         
-        else:
+        
+        for move in legal_moves:
+            if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
+                return best_score
+            clone = game.forecast_move(move)
+            score = self.max_play(clone, depth - 1)
+            if score < best_score:
+                best_score = score
+        return best_score
+
+    def max_play(self, game, depth):
+        legal_moves = game.get_legal_moves(self)
+        best_score = float('-inf')
+        #print(depth)
+        if not legal_moves:
+            return self.score(game, self)
+        if legal_moves and self.iterative:
             for move in legal_moves:
                 if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
                     return best_score
                 clone = game.forecast_move(move)
-                score = self.max_play(clone, depth - 1)
-                if score < best_score:
-                    best_move = move
+                score = self.score(clone, self) 
+                if score > best_score:
                     best_score = score
-        return best_score
-
-    def max_play(self, game, depth):
-        legal_moves = game.get_legal_moves(game.active_player)
-        best_score = float('-inf')
-        #print(depth)
-        if not legal_moves:
-            return self.score(game, game.active_player)
         elif depth <= 1:
             score, best_move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
             return score
         
-        else:
-            for move in legal_moves:
-                if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
-                    return best_score
-                clone = game.forecast_move(move)
-                score = self.min_play(clone, depth - 1)
-                if score > best_score:
-                    best_move = move
-                    best_score = score
+        
+        for move in legal_moves:
+            if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
+                return best_score
+            clone = game.forecast_move(move)
+            score = self.min_play(clone, depth - 1)
+            if score > best_score:
+                best_score = score
         return best_score
             
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
@@ -279,5 +307,42 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
+        best_score = float('-inf')
+        if not maximizing_player:
+            best_score = float('inf')
+
         # TODO: finish this function!
-        raise NotImplementedError
+        legal_moves = game.get_legal_moves(game.active_player)
+        best_move = legal_moves[0]
+        if depth <= 1:
+            best_score, best_move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+            return best_score, best_move
+        
+        else:
+            for move in legal_moves:
+                if self.time_left() <= self.TIMER_THRESHOLD:
+                    return best_score
+                clone = game.forecast_move(move)
+                score = self.score(clone, self)
+                
+                if alpha > score:
+                    alpha = score
+                
+                if beta < score:
+                    beta = score
+
+                if maximizing_player:
+                    if score > alpha and score < beta:
+                        score, best_move = self.alphabeta(game, depth-1, alpha, beta, not maximizing_player)
+                        if score > best_score:
+                            best_score = score
+                            best_move = move
+                            
+                else:
+                    if score > alpha and score < beta:
+                        score, best_move = self.alphabeta(game, depth-1, alpha, beta, not maximizing_player)
+                        if score < best_score:
+                            best_score = score
+                            best_move = move
+                    
+        return best_score, best_move
