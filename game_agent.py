@@ -243,42 +243,38 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
+        legal_moves = game.get_legal_moves(game.active_player)
         best_score = float('-inf')
+        best_move = (-1, -1)
         if not maximizing_player:
             best_score = float('inf')
 
-        # TODO: finish this function!
-        legal_moves = game.get_legal_moves(game.active_player)
-        best_move = legal_moves[0]
-        if depth <= 1:
-            best_score, best_move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-            return best_score, best_move
-        
+        if not legal_moves:
+            return self.score(game, self), best_move
+
+        if depth == 0 or (self.time_left() <= self.TIMER_THRESHOLD + 5 and self.iterative):
+            return self.score(game, self), best_move
+
         else:
             for move in legal_moves:
-                if self.time_left() <= self.TIMER_THRESHOLD:
-                    return best_score
+                if self.time_left() <= self.TIMER_THRESHOLD + 5 and self.iterative:
+                    return best_score, best_move
                 clone = game.forecast_move(move)
-                score = self.score(clone, self)
-                
-                if score > alpha:
-                    alpha = score
-                
-                if score < beta:
-                    beta = score
+                score, _ = self.alphabeta(clone, depth-1, alpha, beta, not maximizing_player)
 
                 if maximizing_player:
-                    if score > alpha and score < beta:
-                        score, best_move = self.alphabeta(game, depth-1, alpha, beta, not maximizing_player)
-                        if score > best_score:
-                            best_score = score
-                            best_move = move
-                            
+                    if score > best_score:
+                        best_score = score
+                        best_move = move
+                    if score >= beta:
+                        return score, move
+                    alpha = max(alpha, score)
                 else:
-                    if score > alpha and score < beta:
-                        score, best_move = self.alphabeta(game, depth-1, alpha, beta, not maximizing_player)
-                        if score < best_score:
-                            best_score = score
-                            best_move = move
+                    if score < best_score:
+                        best_score = score
+                        best_move = move
+                    if score <= alpha:
+                        return score, move
+                    beta = min(beta, score)
                     
         return best_score, best_move
