@@ -7,7 +7,8 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import random
-
+from random import randint
+import math
 
 class Timeout(Exception):
     """Subclass base exception for code clarity."""
@@ -121,27 +122,42 @@ class CustomPlayer:
         self.time_left = time_left
 
         # TODO: finish this function!
-
+        best_score = float('-inf')
+        
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
-        if not game.get_legal_moves(game.active_player):
-            return (-1, -1)
-        if game.move_count <= 1:
-            return (2, 3)
-        best_move = game.get_legal_moves(game.active_player)[0]
-        best_score = float('-inf')
+        if not legal_moves:
+            return (-1,-1)
+        best_move = legal_moves[0]
+
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            if self.method == 'minimax':
-                if self.iterative:
-                    (best_score, best_move) = self.minimax(game, float('inf'))
+            if self.iterative:
+                if self.method == 'minimax':
+                    for i in range(0, 999999):
+                        score, move = self.minimax(game, i)
+                        
+                        if score > best_score:
+                            best_score = score
+                            best_move = move
+                        
+                elif self.method == 'alphabeta':
+                    for i in range(0, 999999):
+                        
+                        score, move = self.alphabeta(game, i)
+                        if score > best_score:
+                            best_score = score
+                            best_move = move
+            else:
+                if self.method == 'minimax':
+                    best_score, best_move = self.minimax(game, self.search_depth)
                 else:
-                    (best_score, best_move) = self.minimax(game, self.search_depth)
-
+                    best_score, best_move = self.alphabeta(game, self.search_depth)
+                     
         except Timeout:
             # Handle any actions required at timeout, if necessary
             pass
@@ -186,11 +202,8 @@ class CustomPlayer:
             
         if not legal_moves:
             return self.score(game, self), best_move
-        if depth == 1 or (self.time_left() <= self.TIMER_THRESHOLD + 5 and self.iterative):
-            if maximizing_player:
-                best_score, best_move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-            else:
-                best_score, best_move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+        if depth == 0:
+            return self.score(game, self), legal_moves[0]
         else:
             for move in legal_moves:
                 if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
