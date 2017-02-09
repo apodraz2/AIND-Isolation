@@ -41,8 +41,53 @@ def custom_score(game, player):
     else:
         own_moves = len(game.get_legal_moves(player))
         opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-        return float(own_moves - opp_moves)
+        return float(own_moves - 100*opp_moves)
 
+def custom_score_two(game, player):
+    if game.is_winner(player):
+        return float('inf')
+    if game.is_loser(player):
+        return float('-inf')
+    else:
+        width = game.width/2
+        position = game.get_player_position(player)
+        opp_position = game.get_player_position(game.get_opponent(player))
+
+        own_moves = len(game.get_legal_moves(player))
+        opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+        
+        position_width_weight = abs(width - position[0])
+        position_height_weight = abs(width - position[1])
+        
+        opp_position_width_weight = abs(width - opp_position[0])
+        opp_position_width_height = abs(width - opp_position[1])
+        
+        return float((own_moves * position_width_weight * position_height_weight) - 100*((opp_moves * opp_position_width_weight * opp_position_width_height)))
+
+def custom_score_three(game, player):
+    if game.is_winner(player):
+        return float('inf')
+    if game.is_loser(player):
+        return float('-inf')
+    else:
+        num_open_positions = game.get_blank_spaces()
+
+        width = game.width/2
+        position = game.get_player_position(player)
+        opp_position = game.get_player_position(game.get_opponent(player))
+
+        own_moves = len(game.get_legal_moves(player))
+        opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+        position_width_weight = abs(width - position[0])
+        position_height_weight = abs(width - position[1])
+
+        opp_position_width_weight = abs(width - opp_position[0])
+        opp_position_width_height = abs(width - opp_position[1])
+
+        return float((own_moves * (-1 * position_width_weight) * (-1 * position_height_weight)) - ((opp_moves * (-1 * opp_position_width_weight) * (-1 * opp_position_width_height))))
+            
+        
 
 class CustomPlayer:
     """Game-playing agent that chooses a move using your evaluation function
@@ -74,8 +119,8 @@ class CustomPlayer:
         timer expires.
     """
 
-    def __init__(self, search_depth=3, score_fn=custom_score,
-                 iterative=True, method='minimax', timeout=10.):
+    def __init__(self, search_depth=3, score_fn=custom_score_three,
+                 iterative=False, method='minimax', timeout=20):
         self.search_depth = search_depth
         self.iterative = iterative
         self.score = score_fn
@@ -130,6 +175,9 @@ class CustomPlayer:
         if not legal_moves:
             return (-1,-1)
         best_move = legal_moves[0]
+        opening_book = [(2, 2), (game.width-3, 2), (4, 2), (2, game.width-3), (game.width-3, game.width-3), (game.width-2, game.width-3), (2, game.width-2), (game.width-3, game.width-2), (game.width-2, game.width-2)]
+        if game.move_count <= 1:
+            return opening_book[randint(0, len(opening_book)-1)]
 
         try:
             # The search method call (alpha beta or minimax) should happen in
@@ -137,21 +185,30 @@ class CustomPlayer:
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
             if self.iterative:
-                if self.method == 'minimax':
-                    for i in range(0, 999999):
-                        score, move = self.minimax(game, i)
-                        
-                        if score > best_score:
-                            best_score = score
-                            best_move = move
-                        
-                elif self.method == 'alphabeta':
-                    for i in range(0, 999999):
+                if self.method == 'alphabeta':
+
+                    for i in range (0, 99999):
+                        if self.time_left() < self.TIMER_THRESHOLD:
+                            raise Timeout()
                         
                         score, move = self.alphabeta(game, i)
                         if score > best_score:
                             best_score = score
-                            best_move = move
+                            if move != (-1, -1):
+                                best_move = move
+                        #print((best_score, best_move))
+                else:
+                    
+                    for i in range (0, 99999):
+                        if self.time_left() < self.TIMER_THRESHOLD:
+                            raise Timeout()
+                        score, move = self.minimax(game, i)
+                        #print((best_score, best_move))
+                        if score > best_score:
+                            best_score = score
+                            if move != (-1, -1):
+                                best_move = move
+                        
             else:
                 if self.method == 'minimax':
                     best_score, best_move = self.minimax(game, self.search_depth)
@@ -160,7 +217,7 @@ class CustomPlayer:
                      
         except Timeout:
             # Handle any actions required at timeout, if necessary
-            pass
+            return best_move
 
         # Return the best move from the last completed search iteration
         return best_move
@@ -192,6 +249,12 @@ class CustomPlayer:
         """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
+            #if game.get_legal_moves(game.active_player):
+             #   return self.score(game, game.active_player), game.get_legal_moves(game.active_player)[0]
+            #else:
+             #   return self.score(game, game.active_player), (-1, -1)
+        
+            
                 
         legal_moves = game.get_legal_moves(game.active_player)
         best_score = float('-inf')
@@ -206,8 +269,9 @@ class CustomPlayer:
             return self.score(game, self), legal_moves[0]
         else:
             for move in legal_moves:
-                if self.time_left() <= self.TIMER_THRESHOLD and self.iterative:
-                    return best_score, best_move
+                if self.time_left() < self.TIMER_THRESHOLD:
+                    raise Timeout()
+#return best_score, best_move
                 clone = game.forecast_move(move)
                 score, _ = self.minimax(clone, depth-1, not maximizing_player)
                 if maximizing_player:
@@ -253,25 +317,32 @@ class CustomPlayer:
         tuple(int, int)
             The best move for the current branch; (-1, -1) for no legal moves
         """
-        if self.time_left() < self.TIMER_THRESHOLD:
+        if self.time_left() <= self.TIMER_THRESHOLD:
             raise Timeout()
+            #if game.get_legal_moves(game.active_player):
+             #   return self.score(game,game.active_player), game.get_legal_moves(game.active_player)[0]
+            #else:
+             #   return self.score(game,game.active_player), (-1, -1)
+            
 
         legal_moves = game.get_legal_moves(game.active_player)
         best_score = float('-inf')
-        best_move = (-1, -1)
+
         if not maximizing_player:
             best_score = float('inf')
 
         if not legal_moves:
-            return self.score(game, self), best_move
-
-        if depth == 0 or (self.time_left() <= self.TIMER_THRESHOLD + 5 and self.iterative):
+            return self.score(game, self), (-1, -1)
+        best_move = legal_moves[0]
+        
+        if depth == 0:
             return self.score(game, self), best_move
 
         else:
             for move in legal_moves:
-                if self.time_left() <= self.TIMER_THRESHOLD + 5 and self.iterative:
-                    return best_score, best_move
+                if self.time_left() <= self.TIMER_THRESHOLD:
+                    raise Timeout()
+                    #return best_score, best_move
                 clone = game.forecast_move(move)
                 score, _ = self.alphabeta(clone, depth-1, alpha, beta, not maximizing_player)
 
