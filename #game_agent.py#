@@ -85,7 +85,14 @@ def custom_score_two(game, player):
 
 def custom_score_three(game, player):
     """
-    
+    Results:
+    ----------
+    Student             72.86%
+    Discussion: 
+    This slight variation on custom_score_2 resulted in a .7% increase, which could be due to randomness. But, because it was
+    slightly better, I'm including it. Here I am using the weight for the position on the board and subtracting it from the number of moves
+    available to the player at that position on the board. In other words, positions at the edges of the board are penalized and positions 
+    closer to the middle of the board are not penalized by the weighting.
     """
     if game.is_winner(player):
         return float('inf')
