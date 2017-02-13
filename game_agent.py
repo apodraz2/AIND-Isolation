@@ -37,11 +37,11 @@ def custom_score(game, player):
     """
     Results:
     ----------
-    Student             66.43%
+    Student             74.64%
     Discussion:
     Borrowing from the improved score from lecture, I heavily weighted the number of opponent
-    moves left in the game by multiplying by 100. This resulted in a modest 1% increase over 
-    the lecture's improved score (65% on my machine)."""
+    moves left in the game by multiplying by 100. This resulted in a 5% increase over 
+    the lecture's improved score (75% on my machine)."""
     if game.is_winner(player):
         return float('inf')
     if game.is_loser(player):
@@ -49,12 +49,13 @@ def custom_score(game, player):
     else:
         own_moves = len(game.get_legal_moves(player))
         opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-        return float(own_moves - 100*opp_moves)
+        return float(own_moves - 3*opp_moves)
 
 def custom_score_two(game, player):
-    """Results:
+    """
+    Results:
     ----------
-    Student             72.14%
+    Student             75.71%
     Discussion:
     This heuristic was an attempt to weight the number of moves left to the player with their
     respective position on the board. By multiplying by the absolute value of the difference
@@ -85,7 +86,12 @@ def custom_score_two(game, player):
 
 def custom_score_three(game, player):
     """
-    
+    Results:
+    ----------
+    Student             75.00%
+    Discussion
+    I was trying to improve upon custom_score_two by penalizing board positions on the edges of the board (so height and width that are greater than zero)
+    and not penalizing the opponent. It does not improve the score, however. So custom_score_two is the preferred heuristic.
     """
     if game.is_winner(player):
         return float('inf')
@@ -107,7 +113,7 @@ def custom_score_three(game, player):
         opp_position_width_weight = abs(width - opp_position[0])
         opp_position_width_height = abs(width - opp_position[1])
 
-        return float((own_moves - position_width_weight - position_height_weight)  - 100*((opp_moves)))
+        return float((own_moves + position_width_weight + position_height_weight)  - 100*((opp_moves)))
             
         
 
@@ -141,7 +147,7 @@ class CustomPlayer:
         timer expires.
     """
 
-    def __init__(self, search_depth=3, score_fn=custom_score_three,
+    def __init__(self, search_depth=3, score_fn=custom_score_two,
                  iterative=False, method='minimax', timeout=20):
         self.search_depth = search_depth
         self.iterative = iterative

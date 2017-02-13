@@ -1,0 +1,135 @@
+Results of custom_score:
+
+*************************
+ Evaluating: ID_Improved 
+*************************
+
+Playing Matches:
+----------
+tournament.py:100: UserWarning: One or more agents lost a match this round due to timeout. The get_move() function must return before time_left() reaches 0 ms. You will need to leave some time for the function to return, and may need to increase this margin to avoid timeouts during  tournament play.
+  warnings.warn(TIMEOUT_WARNING)
+  Match 1: ID_Improved vs   Random	Result: 28 to 12
+  Match 2: ID_Improved vs   MM_Null   	Result: 23 to 17
+  Match 3: ID_Improved vs   MM_Open   	Result: 27 to 13
+  Match 4: ID_Improved vs MM_Improved 	Result: 20 to 20
+  Match 5: ID_Improved vs   AB_Null   	Result: 29 to 11
+  Match 6: ID_Improved vs   AB_Open   	Result: 18 to 22
+  Match 7: ID_Improved vs AB_Improved 	Result: 21 to 19
+
+
+Results:
+----------
+ID_Improved         59.29%
+
+*************************
+   Evaluating: Student   
+*************************
+
+Playing Matches:
+----------
+  Match 1:   Student   vs   Random	Result: 33 to 7
+  Match 2:   Student   vs   MM_Null   	Result: 36 to 4
+  Match 3:   Student   vs   MM_Open   	Result: 29 to 11
+  Match 4:   Student   vs MM_Improved 	Result: 28 to 12
+  Match 5:   Student   vs   AB_Null   	Result: 36 to 4
+  Match 6:   Student   vs   AB_Open   	Result: 27 to 13
+  Match 7:   Student   vs AB_Improved 	Result: 20 to 20
+
+
+Results:
+----------
+Student             74.64%
+
+Results of custom_score_two:
+
+*************************
+ Evaluating: ID_Improved 
+*************************
+
+Playing Matches:
+----------
+tournament.py:100: UserWarning: One or more agents lost a match this round due to timeout. The get_move() function must return before time_left() reaches 0 ms. You will need to leave some time for the function to return, and may need to increase this margin to avoid timeouts during  tournament play.
+  warnings.warn(TIMEOUT_WARNING)
+  Match 1: ID_Improved vs   Random	Result: 35 to 5
+  Match 2: ID_Improved vs   MM_Null   	Result: 36 to 4
+  Match 3: ID_Improved vs   MM_Open   	Result: 26 to 14
+  Match 4: ID_Improved vs MM_Improved 	Result: 25 to 15
+  Match 5: ID_Improved vs   AB_Null   	Result: 32 to 8
+  Match 6: ID_Improved vs   AB_Open   	Result: 25 to 15
+  Match 7: ID_Improved vs AB_Improved 	Result: 16 to 24
+
+
+Results:
+----------
+ID_Improved         69.64%
+
+*************************
+   Evaluating: Student   
+*************************
+
+Playing Matches:
+----------
+  Match 1:   Student   vs   Random	Result: 39 to 1
+  Match 2:   Student   vs   MM_Null   	Result: 37 to 3
+  Match 3:   Student   vs   MM_Open   	Result: 36 to 4
+  Match 4:   Student   vs MM_Improved 	Result: 19 to 21
+  Match 5:   Student   vs   AB_Null   	Result: 33 to 7
+  Match 6:   Student   vs   AB_Open   	Result: 24 to 16
+  Match 7:   Student   vs AB_Improved 	Result: 23 to 17
+
+
+Results:
+----------
+Student             75.36%
+
+Results of custom_score_three:
+
+
+*************************
+ Evaluating: ID_Improved 
+*************************
+
+Playing Matches:
+----------
+tournament.py:100: UserWarning: One or more agents lost a match this round due to timeout. The get_move() function must return before time_left() reaches 0 ms. You will need to leave some time for the function to return, and may need to increase this margin to avoid timeouts during  tournament play.
+  warnings.warn(TIMEOUT_WARNING)
+  Match 1: ID_Improved vs   Random	Result: 38 to 2
+  Match 2: ID_Improved vs   MM_Null   	Result: 38 to 2
+  Match 3: ID_Improved vs   MM_Open   	Result: 27 to 13
+  Match 4: ID_Improved vs MM_Improved 	Result: 25 to 15
+  Match 5: ID_Improved vs   AB_Null   	Result: 28 to 12
+  Match 6: ID_Improved vs   AB_Open   	Result: 22 to 18
+  Match 7: ID_Improved vs AB_Improved 	Result: 19 to 21
+
+
+Results:
+----------
+ID_Improved         70.36%
+
+*************************
+   Evaluating: Student   
+*************************
+
+Playing Matches:
+----------
+  Match 1:   Student   vs   Random	Result: 37 to 3
+  Match 2:   Student   vs   MM_Null   	Result: 37 to 3
+  Match 3:   Student   vs   MM_Open   	Result: 27 to 13
+  Match 4:   Student   vs MM_Improved 	Result: 25 to 15
+  Match 5:   Student   vs   AB_Null   	Result: 34 to 6
+  Match 6:   Student   vs   AB_Open   	Result: 22 to 18
+  Match 7:   Student   vs AB_Improved 	Result: 23 to 17
+
+
+Results:
+----------
+Student             73.21%
+
+Discussion:
+We are going to reccommend the extensive implementation of custom_score_two as our evaluation function. Not only did custom_score_two provide the highest overall score at 75.36%, it also tied with custom_score_three for the highest improvement over the AB_Improved computer score.
+
+We started our research with custom_score. The lecture suggested (own_moves - 2*opponent_moves) as an improved evaluation function. By experimenting with different factors, we found that 3 generally improved the game outcomes most often. Thus, (own_moves - 3*opponent_moves) was our first custom_score evaluation function.
+
+With custom_score_two, I wanted to experiment with weighting different locations on the board. I did this by getting an absolute value for a position's height and weight and adding these weights to the number of moves available at the position. Originally, my hypothesis was that positions in the middle of the board would consistently lead to more wins; this was incorrect. The most consistent winning outcomes ended up being positions that were weighted positively to the outside positions on the board. Also, I experimented greatly with the multiplication factor for the opponent's moves and landed on 100 leading to the most consistently best outcomes.
+
+Finally, custom_score_three was my attempt to simplify custom_score_two by eliminating weighting of the opponent's positions. The outcome is nearly as good as custom_score_two. But, since it isn't as consistently better, custom_score_two is our choice as the ultimate evaluation function.
